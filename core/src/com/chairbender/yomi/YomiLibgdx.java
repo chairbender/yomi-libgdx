@@ -15,6 +15,8 @@ public class YomiLibgdx extends ApplicationAdapter {
     public void create () {
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
+
+
     }
 
     @Override
