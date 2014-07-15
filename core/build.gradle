@@ -5,6 +5,15 @@ sourceCompatibility = 1.6
 
 sourceSets.main.java.srcDirs = [ "src/" ]
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    compile group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
+}
+
 
 eclipse.project {
     name = appName + "-core"

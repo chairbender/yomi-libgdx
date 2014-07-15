@@ -1,0 +1,14 @@
+CharacterName,PokerNumber,TopMoveType,TopMoveBaseDamage,TopMoveBlockDamage,TopMoveSpeed,TopMoveComboPoints,TopMoveComboType,TopMoveHasKnockdown,TopMoveName,TopMoveAcesCost,TopMovePumpCost,TopMovePumpDamage,BottomMoveType,BottomMoveBaseDamage,BottomMoveBlockDamage,BottomMoveSpeed,BottomMoveComboPoints,BottomMoveComboType,BottomMoveHasKnockdown,BottomMoveName,BottomMoveAcesCost,BottomMovePumpCost,BottomMovePumpDamage,SpecialAbilityClassName
+Grave,2,Attack,2,,2.6,1,normal,,,,,,dodge,,,,,,,,,,,
+Grave,3,Attack,3,,3.6,1,normal,,,,,,dodge,,,,,,,,,,,
+Grave,4,Attack,4,,4.6,1,normal,,,,,,dodge,,,,,,,,,,,
+Grave,5,Attack,5,,5.6,1,normal,,,,,,block,,,,,,,,,,,
+Grave,6,Attack,6,,6.6,1,normal,,,,,,block,,,,,,,,,,,
+Grave,7,Block,,,,,,,,,,,throw,7,,7.6,2,starter,1,,,,,MartialMastery
+Grave,8,Block,,,,,,,,,,,throw,7,,8.6,2,starter,1,,,,,
+Grave,9,Block,,,,,,,,,,,throw,7,,9.6,2,starter,1,,,,,
+Grave,10,Block,,,,,,,,,,,throw,7,,10.6,2,starter,1,,,,,MentalToughness
+Grave,J,Attack,8,3,2.4,1,ender,,Lightning Cloud,,,,Attack,8,3,2.4,1,ender,,Lightning Cloud,,,,LightningTrap
+Grave,Q,Attack,10,2,0,3,ender,,Dragonheart,,,,Attack,10,2,0,3,ender,,Dragonheart,,,,
+Grave,K,Attack,7,1,2.2,2,linker,,Whirlwind,,K,7,Attack,7,1,2.2,2,linker,,Whirlwind,,K,7,
+Grave,A,Attack,12,3,1,2,ender,,True-Spark Arc,,,,Attack,45,1,0.4,3,ender,,True Power of Storms,3,,,
