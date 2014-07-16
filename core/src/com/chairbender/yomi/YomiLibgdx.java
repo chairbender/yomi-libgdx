@@ -6,17 +6,21 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.chairbender.yomi.ui.PlayFieldGroup;
+import com.chairbender.yomi.ui.UIConstants;
 
 public class YomiLibgdx extends ApplicationAdapter {
     private Stage stage;
 
+    private PlayFieldGroup playFieldGroup = new PlayFieldGroup();
+
     @Override
     public void create () {
-        stage = new Stage(new ScreenViewport());
+        stage = new Stage(new FitViewport(UIConstants.WORLD_WIDTH,UIConstants.WORLD_HEIGHT));
         Gdx.input.setInputProcessor(stage);
-
-
+        stage.addActor(playFieldGroup);
     }
 
     @Override
