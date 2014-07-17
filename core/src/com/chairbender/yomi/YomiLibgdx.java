@@ -8,19 +8,27 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.chairbender.yomi.api.Game;
+import com.chairbender.yomi.api.character.YomiCharacter;
 import com.chairbender.yomi.ui.PlayFieldGroup;
 import com.chairbender.yomi.ui.UIConstants;
 
 public class YomiLibgdx extends ApplicationAdapter {
     private Stage stage;
 
-    private PlayFieldGroup playFieldGroup = new PlayFieldGroup();
+    private PlayFieldGroup playFieldGroup;
 
     @Override
     public void create () {
         stage = new Stage(new FitViewport(UIConstants.WORLD_WIDTH,UIConstants.WORLD_HEIGHT));
         Gdx.input.setInputProcessor(stage);
+
+        //Create the group then start the game
+        Game thisGame = new Game(YomiCharacter.GRAVE,YomiCharacter.GRAVE);
+        playFieldGroup = new PlayFieldGroup(thisGame.getEventNotifier());
         stage.addActor(playFieldGroup);
+
+        thisGame.startGame();
     }
 
     @Override

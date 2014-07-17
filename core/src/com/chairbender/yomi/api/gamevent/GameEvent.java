@@ -5,5 +5,5 @@ package com.chairbender.yomi.api.gamevent;
  * info relevant to that gamevent (like drawing a card, playing a card, discarding a
  * card, etc...)
  */
-public class GameEvent {
+public abstract class GameEvent {
 }

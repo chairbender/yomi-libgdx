@@ -1,7 +1,11 @@
 package com.chairbender.yomi.ui;
 
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.chairbender.yomi.api.gamestate.model.PlayField;
+import com.chairbender.yomi.api.gamevent.GameEventNotifier;
 
 /**
  * Group that contains the whole play field during a game (for one player).
@@ -11,20 +15,38 @@ import com.chairbender.yomi.api.gamestate.model.PlayField;
  * in the top center. Contains the play area above the hand and the phase indicator.
  * Just like the unity app.
  */
-public class PlayFieldGroup extends Group {
+public class PlayFieldGroup extends GameEventListeningGroup {
 
     private PlayerPlayAreaGroup thisPlayerPlayArea = new PlayerPlayAreaGroup();
     private PlayerPlayAreaGroup opponentPlayArea = new PlayerPlayAreaGroup();
-    private PhaseIndicatorGroup phaseIndicatorGroup = new PhaseIndicatorGroup();
+    private PhaseIndicatorGroup phaseIndicatorGroup;
     private HandGroup handGroup = new HandGroup();
     private StatusGroup statusGroup = new StatusGroup();
 
-    public PlayFieldGroup() {
+    private static final Color BACKGROUND = new Color(201,66,235,0.5f);
+
+    public PlayFieldGroup(GameEventNotifier notifier) {
+        super(notifier);
+
+        phaseIndicatorGroup = new PhaseIndicatorGroup(notifier);
         this.addActor(thisPlayerPlayArea);
         this.addActor(opponentPlayArea);
         this.addActor(phaseIndicatorGroup);
         this.addActor(handGroup);
         this.addActor(statusGroup);
+    }
+
+    ShapeRenderer renderer = new ShapeRenderer();
+    @Override
+    public void draw(Batch batch, float alpha) {
+        batch.end();
+        //draw the brown background
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        renderer.setColor(BACKGROUND);
+        renderer.rect(0,0,UIConstants.WORLD_WIDTH,UIConstants.WORLD_HEIGHT);
+        renderer.end();
+        batch.begin();
+        super.draw(batch,alpha);
     }
 
 }
