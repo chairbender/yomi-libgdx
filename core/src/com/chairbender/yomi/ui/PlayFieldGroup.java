@@ -23,7 +23,7 @@ public class PlayFieldGroup extends GameEventListeningGroup {
     private HandGroup handGroup = new HandGroup();
     private StatusGroup statusGroup = new StatusGroup();
 
-    private static final Color BACKGROUND = new Color(201,66,235,0.5f);
+    private static final Color BACKGROUND = new Color(0.86f,0.48f,0.04f,0.5f);
 
     public PlayFieldGroup(GameEventNotifier notifier) {
         super(notifier);
