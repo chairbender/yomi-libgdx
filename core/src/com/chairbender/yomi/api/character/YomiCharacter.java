@@ -80,8 +80,8 @@ public class YomiCharacter {
         }
 
         //Add the two jokers
-        result.add(Card.createJoker());
-        result.add(Card.createJoker());
+        result.add(Card.createJoker(this));
+        result.add(Card.createJoker(this));
 
         return result;
 
@@ -91,5 +91,18 @@ public class YomiCharacter {
 
     public int getMaxCombo() {
         return maxCombo;
+    }
+
+    /**
+     *
+     * @param s string that is the name of one of the characters
+     * @return the character whose name matches s
+     */
+    public static YomiCharacter fromStringName(String s) {
+        if (s.equalsIgnoreCase("grave")) {
+            return GRAVE;
+        }
+        //TODO: Add other characters
+        return GRAVE;
     }
 }

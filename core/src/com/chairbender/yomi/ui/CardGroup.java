@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.chairbender.yomi.api.card.Card;
 import com.chairbender.yomi.api.card.move.*;
+import com.chairbender.yomi.api.character.YomiCharacter;
 
 /**
  * Represents a card. The position of this should be set by the parent, but the width should not be modified.
@@ -154,31 +155,43 @@ public class CardGroup extends Group {
  * group for drawing move info
  */
 class MoveInfoGroup extends Group {
+    private static final float MOVE_SPACING = 0;
     private final MoveInfo move;
 
-    private static final float scale = 0.8f;
-    private static final float largeScale = 1.2f;
+    private static final float moveNameScale = 0.8f;
     private static final float iconScale = 0.8f;
     private static final float blockDamageIconScale = 0.4f;
-    private Label moveInfoLabel;
     private Label moveTypeLabel;
+
+    private SpeedBoxGroup speedBoxGroup;
+    private Image comboBox;
+
+    private Image comboTypeBox;
+
+    private Image knockDownBox;
+
+    private Image pumpCostBox;
+    private Label pumpCostLabel;
+
     private Image moveTypeIcon;
     private Label damageLabel;
 
     private Label blockDamageLabel;
     private Image blockDamageImage;
+    private static final Texture blockTexture = new Texture("icons/block.png");
+
 
 
 
     public MoveInfoGroup(MoveInfo move,CardGroup parent) {
         this.move = move;
 
-        String moveInfoString = "";
         String moveTypeString = "";
         String moveTypeIconFile = "";
         String damageString = "";
         String blockDamageString = null;
         Color typeColor;
+        //TODO: Reuse the move icon textures
         if (move instanceof OffensiveMoveInfo) {
             OffensiveMoveInfo offense = (OffensiveMoveInfo) move;
             if (offense.getMoveType().equals(MoveType.ATTACK)) {
@@ -197,22 +210,32 @@ class MoveInfoGroup extends Group {
             if (offense.getPumpDamage() > 0) {
                 damageString += "+" + offense.getPumpDamage();
             }
-            moveInfoString += "Speed: " + offense.getSpeed().toString() + "\n";
-            moveInfoString += "Combo Points: " + offense.getComboPoints() + "\n";
             if (!(offense.getComboType().equals(ComboType.CANTCOMBO) ||
                     offense.getComboType().equals(ComboType.NORMAL))) {
-                moveInfoString += offense.getComboType().toString() + "\n";
+
             }
             if (offense.hasKnockdown()) {
-                moveInfoString += "Knockdown\n";
+
             }
             if (offense.isPumpable()) {
                 String pumpString = "";
                 for (int i = 0; i < offense.getPumpLimit(); i++) {
                     pumpString += "+" + offense.getPumpRank().toString();
                 }
-                moveInfoString += "Pump: " + pumpString + "\n";
             }
+
+            speedBoxGroup = new SpeedBoxGroup(offense.getSpeed());
+            speedBoxGroup.setScale(0.6f);
+            addActor(speedBoxGroup);
+
+            ComboBoxGroup comboBoxGroup = new ComboBoxGroup(offense.getComboPoints(),move.getParentCard().getCharacter());
+            comboBoxGroup.setPosition(speedBoxGroup.getX() + speedBoxGroup.getWidth(),0);
+            comboBoxGroup.setScale(0.6f);
+            addActor(comboBoxGroup);
+
+
+
+
         } else {
             if (move.getMoveType().equals(MoveType.BLOCK)) {
                 moveTypeString += "Block";
@@ -226,35 +249,32 @@ class MoveInfoGroup extends Group {
         }
 
 
+        //TODO: position move type text above speedboxgroup
 
+        //The move type text (Attack, Block,...)
         moveTypeLabel   = new Label(moveTypeString, new Label.LabelStyle(new BitmapFont(),typeColor));
-
-
-        moveInfoLabel = new Label(moveInfoString, new Label.LabelStyle(new BitmapFont(),Color.BLACK));
-        moveTypeLabel.setPosition(getX(),moveInfoLabel.getY() + moveInfoLabel.getHeight());
-        moveInfoLabel.setFontScale(scale);
-        moveTypeLabel.setFontScale(largeScale);
+        if (speedBoxGroup != null) {
+            moveTypeLabel.setPosition(0,speedBoxGroup.getHeight() + speedBoxGroup.getY() + MOVE_SPACING);
+        }
+        moveTypeLabel.setFontScale(moveNameScale);
+        addActor(moveTypeLabel);
 
         Texture moveIcon = new Texture(moveTypeIconFile);
         moveTypeIcon = new Image(moveIcon);
         damageLabel = new Label(damageString, new Label.LabelStyle(new BitmapFont(),Color.WHITE));
         positionDamageIcon(moveTypeIcon, damageLabel,moveTypeLabel.getX() + 88,moveTypeLabel.getY() - 20, iconScale);
 
-
-        addActor(moveInfoLabel);
-        addActor(moveTypeLabel);
         addActor(moveTypeIcon);
         addActor(damageLabel);
 
         //handle block damage
         if (blockDamageString != null) {
-            Texture blockIcon = new Texture("icons/block.png");
-            blockDamageImage = new Image(blockIcon);
+            blockDamageImage = new Image(blockTexture);
             blockDamageLabel = new Label(blockDamageString, new Label.LabelStyle(new BitmapFont(),Color.WHITE));
             blockDamageLabel.setFontScale(.8f);
             positionDamageIcon(blockDamageImage, blockDamageLabel,
-                    moveTypeIcon.getX() + moveTypeIcon.getWidth() - blockDamageImage.getWidth()/2,
-                    moveTypeIcon.getY() - (blockDamageImage.getHeight()*blockDamageIconScale)/2,blockDamageIconScale);
+                    moveTypeIcon.getX() + moveTypeIcon.getWidth() - blockDamageImage.getWidth() / 2,
+                    moveTypeIcon.getY() - (blockDamageImage.getHeight() * blockDamageIconScale) / 2, blockDamageIconScale);
 
             addActor(blockDamageImage);
             addActor(blockDamageLabel);
@@ -273,6 +293,51 @@ class MoveInfoGroup extends Group {
 
     @Override
     public float getHeight() {
-        return moveInfoLabel.getHeight() + moveTypeLabel.getHeight();
+        return moveTypeLabel.getHeight() + (speedBoxGroup != null ? speedBoxGroup.getHeight() + MOVE_SPACING: 0);
+    }
+}
+
+class SpeedBoxGroup extends Group {
+    private static final Texture speedTexture = new Texture("icons/speed.png");
+    public SpeedBoxGroup(Speed speed) {
+        Image speedBox = new Image(speedTexture);
+        float speedScale = 0.6f;
+        this.setWidth(speedTexture.getWidth()*speedScale);
+        this.setHeight(speedTexture.getHeight()*speedScale);
+        Label speedLabel = new Label(speed+ "", new Label.LabelStyle(new BitmapFont(),Color.BLACK));
+        speedLabel.setPosition(speedBox.getX() + 23,speedBox.getY() - 1);
+        speedLabel.setFontScale(0.8f);
+        addActor(speedBox);
+        addActor(speedLabel);
+    }
+}
+
+class ComboBoxGroup extends Group {
+    private static final Texture comboTexture = new Texture("icons/combo_points.png");
+    private static final Texture filledTexture = new Texture("icons/combo_filled.png");
+    private static final Texture emptyTexture = new Texture("icons/combo_empty.png");
+    private static final int HORIZ_SPACING = 2;
+
+    public ComboBoxGroup(int comboPoints, YomiCharacter character) {
+        Image box = new Image(comboTexture);
+        addActor(box);
+
+        //Fill it
+        for (int i = 0; i < character.getMaxCombo(); i++) {
+            //first line
+            Image nextStone = comboPoints < i ? new Image(emptyTexture) : new Image(filledTexture);
+            if (i <= 2) {
+                //first line
+                nextStone.setPosition(i * (HORIZ_SPACING + filledTexture.getWidth()) + 18,
+                        8);
+            } else {
+                //second line
+                nextStone.setPosition((i - 3) * (HORIZ_SPACING + filledTexture.getWidth())  + 18,
+                        2);
+            }
+            addActor(nextStone);
+        }
+
+
     }
 }

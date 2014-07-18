@@ -2,6 +2,7 @@ package com.chairbender.yomi.api.card;
 
 import com.chairbender.yomi.api.ability.CardAbility;
 import com.chairbender.yomi.api.card.move.*;
+import com.chairbender.yomi.api.character.YomiCharacter;
 import com.chairbender.yomi.api.csv.CSVUtility;
 
 import java.util.ArrayList;
@@ -16,17 +17,27 @@ public class Card {
     private MoveInfo bottom;
     private PokerValue value;
     private CardAbility specialAbility;
+    private YomiCharacter character;
 
     /**
      *
      * @param value poker value of the card
      * @param specialAbility the special ability. null if none.
      */
-    private Card(PokerValue value, CardAbility specialAbility) {
+    private Card(PokerValue value, CardAbility specialAbility, YomiCharacter character) {
         this.value = value;
         this.specialAbility = specialAbility;
         this.moves = new ArrayList<MoveInfo>();
+        this.character = character;
 
+    }
+
+
+    /**
+     * Returns the character this card is for
+     */
+    public YomiCharacter getCharacter() {
+        return character;
     }
 
     public void setTop(MoveInfo top) {
@@ -76,7 +87,7 @@ public class Card {
     }
 
     public static Card getFromCSVLine(String[] line, PokerValue pokerValue, CardAbility ability) {
-        Card result = new Card(pokerValue,ability);
+        Card result = new Card(pokerValue,ability,YomiCharacter.fromStringName(line[0]));
 
         MoveInfo top = getMoveInfoFromCSVAtIndex(result, 2, line);
         MoveInfo bottom = getMoveInfoFromCSVAtIndex(result, 13, line);
@@ -160,10 +171,10 @@ public class Card {
                               Speed bottomMoveSpeed, int bottomMoveComboPoints,
                               ComboType bottomMoveComboType, boolean bottomMoveHasKnockdown, int bottomMoveBaseDamage,
                               int bottomMoveBlockDamage, String bottomMoveName, int bottomMoveAcesCost, int bottomMovePumpDamage,
-                              PumpCost bottomMovePumpCost) {
+                              PumpCost bottomMovePumpCost,YomiCharacter forCharacter) {
         MoveInfo topMove = null;
         MoveInfo bottomMove = null;
-        Card result = new Card(pokerValue,ability);
+        Card result = new Card(pokerValue,ability,forCharacter);
         if (topMoveMoveType.equals(MoveType.BLOCK) || topMoveMoveType.equals(MoveType.DODGE)) {
             topMove = new DefensiveMoveInfo(result,topMoveMoveType);
         } else {
@@ -186,7 +197,7 @@ public class Card {
         return result;
     }
 
-    public static Card createJoker() {
-        return new Card(PokerValue.JOKER, null);
+    public static Card createJoker(YomiCharacter forCharacter) {
+        return new Card(PokerValue.JOKER, null,forCharacter);
     }
 }
