@@ -57,6 +57,9 @@ public class OffensiveMoveInfo extends MoveInfo {
         return moveType;
     }
 
+    public boolean hasKnockdown() {
+        return hasKnockdown;
+    }
 
     @Override
     public String toString() {

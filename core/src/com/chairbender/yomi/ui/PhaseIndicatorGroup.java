@@ -18,7 +18,7 @@ import com.chairbender.yomi.api.gamevent.PhaseChangeEvent;
 public class PhaseIndicatorGroup extends GameEventListeningGroup{
     //constants
     private static final float X = 0;
-    private static final float Y = UIConstants.WORLD_HEIGHT / 2;
+    private static final float Y = UIConstants.WORLD_HEIGHT / 2 - 120;
     private static final float WIDTH = UIConstants.WORLD_WIDTH;
     protected static final float HEIGHT = 35;
 
@@ -168,6 +168,7 @@ class PhaseActor extends Group {
 
     @Override
     public void draw(Batch batch, float alpha) {
+        //TODO: Use label instead of font rendering
         batch.end();
         shapeRenderer.setTransformMatrix(batch.getTransformMatrix());
         shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());

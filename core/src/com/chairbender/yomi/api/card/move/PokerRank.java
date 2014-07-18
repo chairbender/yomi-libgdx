@@ -57,6 +57,16 @@ public class PokerRank {
     }
 
 
+    /**
+     *
+     * @return the integer value representing the rank. for Ace, it's 15, for KING, 13, for Queen
+     * 12, for JACK, 11
+     */
+    public int getIntegerValue() {
+        return value;
+    }
+
+
     public enum Royal {
         JACK(11),
         QUEEN(12),

@@ -27,6 +27,10 @@ public class PokerValue {
 
     }
 
+    public Suit getSuit() {
+        return suit;
+    }
+
     /**
      *
      * @param rank rank to use

@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Group;
+import com.chairbender.yomi.api.character.YomiCharacter;
 import com.chairbender.yomi.api.gamestate.model.PlayField;
 import com.chairbender.yomi.api.gamevent.GameEventNotifier;
 
@@ -20,7 +21,7 @@ public class PlayFieldGroup extends GameEventListeningGroup {
     private PlayerPlayAreaGroup thisPlayerPlayArea = new PlayerPlayAreaGroup();
     private PlayerPlayAreaGroup opponentPlayArea = new PlayerPlayAreaGroup();
     private PhaseIndicatorGroup phaseIndicatorGroup;
-    private HandGroup handGroup = new HandGroup();
+    private HandGroup handGroup;
     private StatusGroup statusGroup = new StatusGroup();
 
     private static final Color BACKGROUND = new Color(0.86f,0.48f,0.04f,0.5f);
@@ -29,11 +30,16 @@ public class PlayFieldGroup extends GameEventListeningGroup {
         super(notifier);
 
         phaseIndicatorGroup = new PhaseIndicatorGroup(notifier);
+        handGroup = new HandGroup(notifier);
         this.addActor(thisPlayerPlayArea);
         this.addActor(opponentPlayArea);
         this.addActor(phaseIndicatorGroup);
         this.addActor(handGroup);
         this.addActor(statusGroup);
+
+        //todo: remove placeholder card
+        CardGroup card = new CardGroup(YomiCharacter.GRAVE.allCards().get(4));
+        handGroup.addCard(card);
     }
 
     ShapeRenderer renderer = new ShapeRenderer();
