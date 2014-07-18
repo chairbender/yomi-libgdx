@@ -33,12 +33,15 @@ public class HandGroup extends GameEventListeningGroup {
         toAdd.remove();
         addActor(toAdd);
         toAdd.addAction(Actions.moveTo((getChildren().size-1)*toAdd.getWidth(),MARGIN,0.5f, Interpolation.pow2));
+        positionEverything();
     }
 
     private void positionEverything() {
         int x = 0;
         for (Actor card : getChildren()) {
             card.setPosition(x,MARGIN);
+            card.setOrigin(0,0);
+            card.setScale(3f);
             x += card.getWidth();
         }
     }

@@ -38,7 +38,7 @@ public class PlayFieldGroup extends GameEventListeningGroup {
         this.addActor(statusGroup);
 
         //todo: remove placeholder card
-        CardGroup card = new CardGroup(YomiCharacter.GRAVE.allCards().get(4));
+        CardGroup card = new CardGroup(YomiCharacter.GRAVE.allCards().get(44));
         handGroup.addCard(card);
     }
 

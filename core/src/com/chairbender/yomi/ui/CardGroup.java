@@ -8,14 +8,17 @@ import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.utils.Align;
 import com.chairbender.yomi.api.card.Card;
 import com.chairbender.yomi.api.card.move.*;
 import com.chairbender.yomi.api.character.YomiCharacter;
 
 /**
- * Represents a card. The position of this should be set by the parent, but the width should not be modified.
+ * Represents a card. The position of this should be set by the parent, but it should only be resized by
+ * setting scale.
  * Position is relative to the bottom left
  */
 public class CardGroup extends Group {
@@ -24,12 +27,14 @@ public class CardGroup extends Group {
     private Card card;
 
     private Image cardImage;
-    private float scale = 2.2f;
 
     private MoveInfoGroup topMove;
     private MoveInfoGroup bottomMove;
 
-    private float rotation = 0;
+    //group so we can have separate rotation and scale groups
+    private Group rotateGroup;
+
+    private static final float LEFT_MARGIN = 14;
 
     /**
      *
@@ -41,22 +46,45 @@ public class CardGroup extends Group {
         //this card's position are determined by the parent, but height is determined by this
         //actor
 
-
+        rotateGroup = new Group();
         //create everything used in the draw method
         Texture cardTexture = new Texture(getImageFileName());
         this.cardImage = new Image(cardTexture);
-        cardImage.setBounds(0,0,cardTexture.getWidth()*scale,cardTexture.getHeight()*scale);
+        cardImage.setBounds(0,0,cardTexture.getWidth(),cardTexture.getHeight());
         //add the move info
         topMove = new MoveInfoGroup(card.topMoveInfo(),this);
         bottomMove = new MoveInfoGroup(card.bottomMoveInfo(),this);
-        addActor(cardImage);
-        addActor(topMove);
-        addActor(bottomMove);
+        rotateGroup.addActor(cardImage);
 
-        positionEverything();
+        //Create an outer group for scaling. The rotation will be done on the
+        //groups inside the scaling group
+        Group scalingTopGroup = new Group();
+        Group scalingBottomGroup = new Group();
+        scalingTopGroup.setBounds(0,0,getWidth(),getHeight());
+        scalingBottomGroup.setBounds(0,0,getWidth(),getHeight());
+        topMove.setPosition(LEFT_MARGIN,cardImage.getHeight() - topMove.getHeight());
+        bottomMove.setPosition(LEFT_MARGIN,cardImage.getHeight() - bottomMove.getHeight());
+
+        //set origins to this card's middle point
+        this.setOrigin(getWidth()/2,getHeight()/2);
+        topMove.setOrigin(getWidth()/2 - topMove.getX(), getHeight()/2 - topMove.getY());
+        //need 45 and -50
+        bottomMove.setOrigin(getWidth()/2 - bottomMove.getX(), getHeight()/2 - bottomMove.getY());
+
+        bottomMove.setRotation(180);
+
+        scalingTopGroup.addActor(topMove);
+        scalingBottomGroup.addActor(bottomMove);
+
+        scalingTopGroup.setOrigin(LEFT_MARGIN,scalingTopGroup.getHeight());
+        scalingTopGroup.setScale(0.44f);
+        scalingBottomGroup.setOrigin(getWidth() - LEFT_MARGIN,0);
+        scalingBottomGroup.setScale(0.44f);
+        rotateGroup.addActor(scalingTopGroup);
+        rotateGroup.addActor(scalingBottomGroup);
 
         //click event
-        cardImage.addListener(new InputListener() {
+        rotateGroup.addListener(new InputListener() {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 rotate();
@@ -64,22 +92,8 @@ public class CardGroup extends Group {
             }
         });
 
-    }
+        addActor(rotateGroup);
 
-    /**
-     * position everything based on this group's coordinates and bounds
-     */
-    private void positionEverything() {
-        topMove.setPosition(27,cardImage.getHeight() - topMove.getHeight());
-        bottomMove.setPosition(27,cardImage.getHeight() - bottomMove.getHeight());
-        //set origins to this card's middle point
-        this.setOrigin(getWidth()/2,getHeight()/2);
-        topMove.setOrigin(getWidth()/2 - topMove.getX(), getHeight()/2 - topMove.getY());
-        //need 45 and -50
-        bottomMove.setOrigin(getWidth()/2 - bottomMove.getX(), getHeight()/2 - bottomMove.getY());
-
-        bottomMove.setRotation(rotation + 180);
-        topMove.setRotation(rotation);
     }
 
 
@@ -88,17 +102,26 @@ public class CardGroup extends Group {
      * rotate the card so the other side is on top, via an animation
      */
     public void rotate() {
-        this.addAction(Actions.rotateBy(180,0.5f, Interpolation.pow4));
+        rotateGroup.addAction(Actions.rotateBy(180,0.5f, Interpolation.pow4));
     }
 
     @Override
     public float getHeight() {
-        return cardImage.getHeight();
+        return cardImage.getHeight() * getScaleY();
     }
 
     @Override
     public float getWidth() {
-        return cardImage.getWidth();
+        return cardImage.getWidth() * getScaleX();
+    }
+
+
+    @Override
+    public void setScale(float scale) {
+        super.setScale(scale);
+        //reset the inner group origin
+        rotateGroup.setOrigin(cardImage.getWidth()/2,cardImage.getHeight()/2);
+
     }
 
     /**
@@ -109,8 +132,7 @@ public class CardGroup extends Group {
     @Override
     public void setPosition(float x, float y) {
         super.setPosition(x, y);
-        positionEverything();
-
+    //TODO: maybe fix?
     }
 
     /* @Override
@@ -159,19 +181,12 @@ class MoveInfoGroup extends Group {
     private final MoveInfo move;
 
     private static final float moveNameScale = 0.8f;
-    private static final float iconScale = 0.8f;
-    private static final float blockDamageIconScale = 0.4f;
+    private static final float iconScale = 0.7f;
+    private static final float blockDamageIconScale = 0.3f;
+    private final Texture knockDownTexture = new Texture("icons/knockdown.png");
     private Label moveTypeLabel;
 
-    private SpeedBoxGroup speedBoxGroup;
-    private Image comboBox;
-
-    private Image comboTypeBox;
-
-    private Image knockDownBox;
-
-    private Image pumpCostBox;
-    private Label pumpCostLabel;
+    private HorizontalGroup infoGroup;
 
     private Image moveTypeIcon;
     private Label damageLabel;
@@ -210,32 +225,39 @@ class MoveInfoGroup extends Group {
             if (offense.getPumpDamage() > 0) {
                 damageString += "+" + offense.getPumpDamage();
             }
-            if (!(offense.getComboType().equals(ComboType.CANTCOMBO) ||
-                    offense.getComboType().equals(ComboType.NORMAL))) {
 
-            }
-            if (offense.hasKnockdown()) {
+            infoGroup = new HorizontalGroup();
+            infoGroup.align(Align.bottom);
 
-            }
-            if (offense.isPumpable()) {
-                String pumpString = "";
-                for (int i = 0; i < offense.getPumpLimit(); i++) {
-                    pumpString += "+" + offense.getPumpRank().toString();
-                }
-            }
 
-            speedBoxGroup = new SpeedBoxGroup(offense.getSpeed());
-            speedBoxGroup.setScale(0.6f);
-            addActor(speedBoxGroup);
+            SpeedBoxGroup speedBoxGroup = new SpeedBoxGroup(offense.getSpeed());
+            infoGroup.addActor(speedBoxGroup);
 
             ComboBoxGroup comboBoxGroup = new ComboBoxGroup(offense.getComboPoints(),move.getParentCard().getCharacter());
-            comboBoxGroup.setPosition(speedBoxGroup.getX() + speedBoxGroup.getWidth(),0);
-            comboBoxGroup.setScale(0.6f);
-            addActor(comboBoxGroup);
+            infoGroup.addActor(comboBoxGroup);
+
+            if (!(offense.getComboType().equals(ComboType.CANTCOMBO) ||
+                    offense.getComboType().equals(ComboType.NORMAL))) {
+                ComboTypeGroup comboTypeGroup = new ComboTypeGroup(offense.getComboType());
+                infoGroup.addActor(comboTypeGroup);
+            }
+            if (offense.hasKnockdown()) {
+                Group kdGroup = new Group();
+                Image knockDown = new Image(knockDownTexture);
+                kdGroup.addActor(knockDown);
+                kdGroup.setWidth(knockDownTexture.getWidth());
+                kdGroup.setHeight(knockDownTexture.getHeight());
+                infoGroup.addActor(kdGroup);
+            }
+            if (offense.isPumpable()) {
+                PumpCostGroup pumpCostGroup = new PumpCostGroup(offense);
+                infoGroup.addActor(pumpCostGroup);
+            }
 
 
-
-
+            infoGroup.setOrigin(0,infoGroup.getPrefHeight());
+            infoGroup.setScale(0.55f);
+            addActor(infoGroup);
         } else {
             if (move.getMoveType().equals(MoveType.BLOCK)) {
                 moveTypeString += "Block";
@@ -248,13 +270,10 @@ class MoveInfoGroup extends Group {
             }
         }
 
-
-        //TODO: position move type text above speedboxgroup
-
         //The move type text (Attack, Block,...)
         moveTypeLabel   = new Label(moveTypeString, new Label.LabelStyle(new BitmapFont(),typeColor));
-        if (speedBoxGroup != null) {
-            moveTypeLabel.setPosition(0,speedBoxGroup.getHeight() + speedBoxGroup.getY() + MOVE_SPACING);
+        if (infoGroup != null) {
+            moveTypeLabel.setPosition(0,infoGroup.getPrefHeight() + infoGroup.getY() + MOVE_SPACING);
         }
         moveTypeLabel.setFontScale(moveNameScale);
         addActor(moveTypeLabel);
@@ -293,22 +312,29 @@ class MoveInfoGroup extends Group {
 
     @Override
     public float getHeight() {
-        return moveTypeLabel.getHeight() + (speedBoxGroup != null ? speedBoxGroup.getHeight() + MOVE_SPACING: 0);
+        return getScaleY() * (moveTypeLabel.getHeight() + (infoGroup != null ? infoGroup.getPrefHeight() + MOVE_SPACING: 0));
     }
+
 }
 
 class SpeedBoxGroup extends Group {
     private static final Texture speedTexture = new Texture("icons/speed.png");
     public SpeedBoxGroup(Speed speed) {
         Image speedBox = new Image(speedTexture);
-        float speedScale = 0.6f;
-        this.setWidth(speedTexture.getWidth()*speedScale);
-        this.setHeight(speedTexture.getHeight()*speedScale);
         Label speedLabel = new Label(speed+ "", new Label.LabelStyle(new BitmapFont(),Color.BLACK));
         speedLabel.setPosition(speedBox.getX() + 23,speedBox.getY() - 1);
         speedLabel.setFontScale(0.8f);
         addActor(speedBox);
         addActor(speedLabel);
+    }
+
+    @Override
+    public float getWidth() {
+        return speedTexture.getWidth() * getScaleX();
+    }
+    @Override
+    public float getHeight() {
+        return speedTexture.getHeight() * getScaleY();
     }
 }
 
@@ -337,7 +363,56 @@ class ComboBoxGroup extends Group {
             }
             addActor(nextStone);
         }
+    }
 
+    @Override
+    public float getWidth() {
+        return comboTexture.getWidth() * getScaleX();
+    }
+}
 
+class ComboTypeGroup extends Group {
+    private static final Texture boxTexture = new Texture("icons/combo_type.png");
+
+    public ComboTypeGroup(ComboType comboType) {
+        Image box = new Image(boxTexture);
+        Label text = new Label(comboType.toString(), new Label.LabelStyle(new BitmapFont(),Color.BLACK));
+        text.setOrigin(text.getTextBounds().width/2,text.getTextBounds().height/2);
+        //text.setCenterPosition(boxTexture.getWidth()/2,boxTexture.getHeight()/2);
+        text.setFontScale((boxTexture.getWidth() - 8) / text.getTextBounds().width);
+        text.setPosition(5,0);
+
+        addActor(box);
+        addActor(text);
+    }
+
+    @Override
+    public float getWidth() {
+        return boxTexture.getWidth() * getScaleX();
+    }
+}
+
+class PumpCostGroup extends Group {
+    private static final Texture pumpTexture = new Texture("icons/pump.png");
+
+    public PumpCostGroup(OffensiveMoveInfo offense) {
+        Image box = new Image(pumpTexture);
+        String pumpString = "";
+        for (int i = 0; i < offense.getPumpLimit(); i++) {
+            pumpString += "+" + offense.getPumpRank().toString();
+        }
+        Label text = new Label(pumpString, new Label.LabelStyle(new BitmapFont(),Color.BLACK));
+        text.setOrigin(text.getTextBounds().width/2,text.getTextBounds().height/2);
+        //text.setCenterPosition(boxTexture.getWidth()/2,boxTexture.getHeight()/2);
+        text.setFontScale((pumpTexture.getHeight() - 8) / text.getTextBounds().height);
+        text.setPosition(15,-1);
+
+        addActor(box);
+        addActor(text);
+    }
+
+    @Override
+    public float getWidth() {
+        return pumpTexture.getWidth() * getScaleX();
     }
 }
