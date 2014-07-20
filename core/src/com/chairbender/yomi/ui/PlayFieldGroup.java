@@ -41,6 +41,8 @@ public class PlayFieldGroup extends GameEventListeningGroup {
         handGroup.addCard(new CardGroup(YomiCharacter.GRAVE.allCards().get(44)),0);
         handGroup.addCard(new CardGroup(YomiCharacter.GRAVE.allCards().get(45)),1);
         handGroup.addCard(new CardGroup(YomiCharacter.GRAVE.allCards().get(40)),1);
+        handGroup.addCard(new CardGroup(YomiCharacter.GRAVE.allCards().get(23)),1);
+        handGroup.addCard(new CardGroup(YomiCharacter.GRAVE.allCards().get(42)),1);
     }
 
     ShapeRenderer renderer = new ShapeRenderer();

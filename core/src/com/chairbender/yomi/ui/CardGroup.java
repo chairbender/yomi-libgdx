@@ -108,7 +108,7 @@ public class CardGroup extends Group {
         super.setScale(scale);
         //reset the inner group origin
         rotateGroup.setOrigin(cardImage.getWidth()/2,cardImage.getHeight()/2);
-        this.setWidth(cardImage.getWidth()*scale);
+        this.setBounds(getX(),getY(),cardImage.getWidth()*scale,cardImage.getHeight()*scale);
     }
 
     /**
