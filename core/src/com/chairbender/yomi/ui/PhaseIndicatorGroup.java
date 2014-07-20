@@ -18,7 +18,7 @@ import com.chairbender.yomi.api.gamevent.PhaseChangeEvent;
 public class PhaseIndicatorGroup extends GameEventListeningGroup{
     //constants
     private static final float X = 0;
-    private static final float Y = UIConstants.WORLD_HEIGHT / 2 - 40;
+    private static final float Y = UIConstants.WORLD_HEIGHT / 2 - 90;
     private static final float WIDTH = UIConstants.WORLD_WIDTH;
     protected static final float HEIGHT = 35;
 

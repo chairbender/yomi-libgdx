@@ -30,13 +30,15 @@ public class HandGroup extends GameEventListeningGroup {
         cards = new Group();
         cards.setBounds(0,0,UIConstants.WORLD_WIDTH,UIConstants.WORLD_HEIGHT/2);
 
-        int x = 0;
-        for (Actor card : getChildren()) {
-            card.setPosition(x,MARGIN);
-            card.setOrigin(0,0);
-            card.setScale(3f);
-            x += card.getWidth();
-        }
+        //click event
+        addListener(new InputListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                addCard(new CardGroup(YomiCharacter.GRAVE.allCards().get(40)),2);
+                return true;
+            }
+        });
+
         addActor(cards);
     }
 
@@ -58,7 +60,7 @@ public class HandGroup extends GameEventListeningGroup {
 
         //Determine what the new positions would be
         //by adding them to a horizontal group and checking their positions
-        HorizontalGroup newGroup = new HorizontalGroup().space(30);
+        HorizontalGroup newGroup = new HorizontalGroup().space(calculateSpacing(cards.getChildren().size + 1,toAdd.getWidth()));
         newGroup.align(Align.bottom);
         oldPositions.add(index,new Vector2(toAdd.getX(),toAdd.getY()));
         cards.addActorAt(index,toAdd);
@@ -74,6 +76,8 @@ public class HandGroup extends GameEventListeningGroup {
         for (Actor card : newGroup.getChildren()) {
             newPositions.add(new Vector2(card.getX(),card.getY()));
         }
+        //calculate what is needed to center the cards
+        float centerOffset = UIConstants.WORLD_WIDTH / 2 - newGroup.getPrefWidth() / 2;
         //remove them from the horizontal group and add them back to the normal group so it doesn't try to move them around
         while (newGroup.getChildren().size > 0) {
             cards.addActor(newGroup.getChildren().get(0));
@@ -81,14 +85,29 @@ public class HandGroup extends GameEventListeningGroup {
 
 
         //then interpolate between them for each card.
-        //They will be in a placeholder group
         for (int i = 0; i < newPositions.size(); i++) {
             CardGroup toMove = (CardGroup) cards.getChildren().get(i);
             Vector2 oldPosition = oldPositions.get(i);
             Vector2 newPosition = newPositions.get(i);
             toMove.setPosition(oldPosition.x, oldPosition.y);
-            toMove.addAction(Actions.moveTo(newPosition.x,newPosition.y,0.5f,Interpolation.pow2));
-
+            toMove.addAction(Actions.moveTo(newPosition.x + centerOffset,MARGIN,0.5f,Interpolation.pow2));
         }
+    }
+
+    /**
+     *
+     * @param cardCount number of cards
+     * @param cardWidth width of a card
+     * @return a float indicating the spacing required to fit all the cards in
+     */
+    private float calculateSpacing(int cardCount, float cardWidth) {
+
+        float spacing = (UIConstants.WORLD_WIDTH - (cardCount * cardWidth) )/
+                (cardCount - 1);
+        if (spacing > 0) {
+            spacing = 5;
+        }
+
+        return spacing;
     }
 }
