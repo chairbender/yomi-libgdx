@@ -5,8 +5,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Group;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -22,7 +20,6 @@ import com.chairbender.yomi.api.character.YomiCharacter;
  * Position is relative to the bottom left
  */
 public class CardGroup extends Group {
-
 
     private Card card;
 
@@ -50,7 +47,6 @@ public class CardGroup extends Group {
         //create everything used in the draw method
         Texture cardTexture = new Texture(getImageFileName());
         this.cardImage = new Image(cardTexture);
-        cardImage.setBounds(0,0,cardTexture.getWidth(),cardTexture.getHeight());
         //add the move info
         topMove = new MoveInfoGroup(card.topMoveInfo(),this);
         bottomMove = new MoveInfoGroup(card.bottomMoveInfo(),this);
@@ -60,16 +56,16 @@ public class CardGroup extends Group {
         //groups inside the scaling group
         Group scalingTopGroup = new Group();
         Group scalingBottomGroup = new Group();
-        scalingTopGroup.setBounds(0,0,getWidth(),getHeight());
-        scalingBottomGroup.setBounds(0,0,getWidth(),getHeight());
+        scalingTopGroup.setBounds(0,0, getScaledImageWidth(), getScaledImageHeight());
+        scalingBottomGroup.setBounds(0,0, getScaledImageWidth(), getScaledImageHeight());
         topMove.setPosition(LEFT_MARGIN,cardImage.getHeight() - topMove.getHeight());
         bottomMove.setPosition(LEFT_MARGIN,cardImage.getHeight() - bottomMove.getHeight());
 
         //set origins to this card's middle point
-        this.setOrigin(getWidth()/2,getHeight()/2);
-        topMove.setOrigin(getWidth()/2 - topMove.getX(), getHeight()/2 - topMove.getY());
+        this.setOrigin(getScaledImageWidth()/2,getHeight()/2);
+        topMove.setOrigin(getScaledImageWidth()/2 - topMove.getX(), getScaledImageHeight()/2 - topMove.getY());
         //need 45 and -50
-        bottomMove.setOrigin(getWidth()/2 - bottomMove.getX(), getHeight()/2 - bottomMove.getY());
+        bottomMove.setOrigin(getScaledImageWidth()/2 - bottomMove.getX(), getScaledImageHeight()/2 - bottomMove.getY());
 
         bottomMove.setRotation(180);
 
@@ -78,19 +74,12 @@ public class CardGroup extends Group {
 
         scalingTopGroup.setOrigin(LEFT_MARGIN,scalingTopGroup.getHeight());
         scalingTopGroup.setScale(0.44f);
-        scalingBottomGroup.setOrigin(getWidth() - LEFT_MARGIN,0);
+        scalingBottomGroup.setOrigin(getScaledImageWidth() - LEFT_MARGIN,0);
         scalingBottomGroup.setScale(0.44f);
         rotateGroup.addActor(scalingTopGroup);
         rotateGroup.addActor(scalingBottomGroup);
 
-        //click event
-        rotateGroup.addListener(new InputListener() {
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                rotate();
-                return true;
-            }
-        });
+
 
         addActor(rotateGroup);
 
@@ -105,14 +94,12 @@ public class CardGroup extends Group {
         rotateGroup.addAction(Actions.rotateBy(180,0.5f, Interpolation.pow4));
     }
 
-    @Override
-    public float getHeight() {
-        return cardImage.getHeight() * getScaleY();
+    public float getScaledImageHeight() {
+        return cardImage.getHeight()*getScaleX();
     }
 
-    @Override
-    public float getWidth() {
-        return cardImage.getWidth() * getScaleX();
+    public float getScaledImageWidth() {
+        return cardImage.getWidth()*getScaleY();
     }
 
 
@@ -121,26 +108,8 @@ public class CardGroup extends Group {
         super.setScale(scale);
         //reset the inner group origin
         rotateGroup.setOrigin(cardImage.getWidth()/2,cardImage.getHeight()/2);
-
+        this.setWidth(cardImage.getWidth()*scale);
     }
-
-    /**
-     * set the position of this card
-     * @param x
-     * @param y
-     */
-    @Override
-    public void setPosition(float x, float y) {
-        super.setPosition(x, y);
-    //TODO: maybe fix?
-    }
-
-    /* @Override
-    public void draw(Batch batch, float alpha) {
-        cardSprite.setBounds(getX(),getY(),scale * cardSprite.getTexture().getWidth(),
-                scale * cardSprite.getTexture().getHeight());
-        cardSprite.draw(batch);
-    }*/
 
     /**
      *

@@ -30,15 +30,6 @@ public class HandGroup extends GameEventListeningGroup {
         cards = new Group();
         cards.setBounds(0,0,UIConstants.WORLD_WIDTH,UIConstants.WORLD_HEIGHT/2);
 
-        //click event
-        addListener(new InputListener() {
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                addCard(new CardGroup(YomiCharacter.GRAVE.allCards().get(40)),2);
-                return true;
-            }
-        });
-
         addActor(cards);
     }
 
@@ -49,9 +40,39 @@ public class HandGroup extends GameEventListeningGroup {
      * @param toAdd cardgroup to add to the hand
      * @param index index to add the card at (left is 0)
      */
-    public void addCard(CardGroup toAdd, int index) {
+    public void addCard(final CardGroup toAdd, int index) {
+        //make it big enough
         toAdd.setOrigin(0,0);
         toAdd.setScale(3f);
+
+        //click events for the card
+        toAdd.addListener(new InputListener() {
+            private float offsetX, offsetY;
+            private boolean dragged = false;
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                Vector2 coords = toAdd.localToParentCoordinates(new Vector2(x,y));
+                offsetX = coords.x - toAdd.getX();
+                offsetY = coords.y - toAdd.getY();
+                return true;
+            }
+            @Override
+            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+                if (dragged) {
+                    dragged = false;
+                } else {
+                    toAdd.rotate();
+                }
+            }
+
+            @Override
+            public void touchDragged(InputEvent event, float x, float y, int pointer) {
+                dragged = true;
+                Vector2 coords = toAdd.localToParentCoordinates(new Vector2(x,y));
+                toAdd.setPosition(coords.x - offsetX, coords.y - offsetY);
+            }
+        });
+
         //save the old positions of the cards
         List<Vector2> oldPositions = new ArrayList<Vector2>();
         for (Actor actor : cards.getChildren()) {
