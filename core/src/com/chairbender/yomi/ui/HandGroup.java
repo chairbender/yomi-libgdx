@@ -1,18 +1,20 @@
 package com.chairbender.yomi.ui;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.Group;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.Align;
 import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
 import com.badlogic.gdx.utils.SnapshotArray;
+import com.chairbender.yomi.api.card.Card;
 import com.chairbender.yomi.api.character.YomiCharacter;
 import com.chairbender.yomi.api.gamevent.GameEventNotifier;
 
@@ -30,6 +32,22 @@ public class HandGroup extends GameEventListeningGroup {
 
     private Group invisibleCard;
 
+    private CardGroup zoomCard;
+
+    //for the zoom menu
+    private Image selectButton;
+    private Image cancelButton;
+    private Image nextCardImage;
+    private Image previousCardImage;
+    private Image rotateImage;
+    private Group zoomGroup;
+
+
+    private final Texture rotateTexture = new Texture("icons/rotate.png");
+    private final Texture arrowTexture = new Texture("icons/arrow.png");
+    private final Texture selectTexture = new Texture("icons/select.png");
+    private final Texture cancelTexture = new Texture("icons/cancel.png");
+
     public HandGroup(GameEventNotifier notifier) {
         super(notifier);
 
@@ -37,6 +55,35 @@ public class HandGroup extends GameEventListeningGroup {
         cards.setBounds(0,0,UIConstants.WORLD_WIDTH,UIConstants.WORLD_HEIGHT/2);
 
         addActor(cards);
+
+        //set up the images and buttons for the zoom menu
+        selectButton = new Image(selectTexture);
+        selectButton.setScale(1.5f);
+        selectButton.setPosition(220,700);
+        cancelButton = new Image(cancelTexture);
+        cancelButton.setScale(1.5f);
+        cancelButton.setPosition(220, 100);
+        nextCardImage = new Image(arrowTexture);
+        nextCardImage.setScale(2f);
+        nextCardImage.setPosition(1200, 300);
+        previousCardImage = new Image(arrowTexture);
+        previousCardImage.rotateBy(180);
+        previousCardImage.setScale(2f);
+        previousCardImage.setPosition(500, 400);
+        rotateImage = new Image(rotateTexture);
+        rotateImage.setScale(0.5f);
+        rotateImage.setPosition(350,500);
+        zoomGroup = new Group();
+        zoomGroup.addActor(selectButton);
+        zoomGroup.addActor(cancelButton);
+        zoomGroup.addActor(nextCardImage);
+        zoomGroup.addActor(previousCardImage);
+        zoomGroup.addActor(rotateImage);
+        zoomGroup.setTouchable(Touchable.disabled);
+        zoomGroup.setVisible(false);
+
+        addActor(zoomGroup);
+
     }
 
 
@@ -56,6 +103,21 @@ public class HandGroup extends GameEventListeningGroup {
             public int returnIndex = -1;
             public float offsetX;
             public float offsetY;
+            public boolean zoomed = false;
+
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                return true;
+            }
+
+            @Override
+            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+                if (!dragged && !hasRotated) {
+                    //zoom
+                    zoomed = true;
+                    zoomCard(toAdd);
+                }
+            }
 
             @Override
             public void dragStart(InputEvent event, float x, float y, int pointer) {
@@ -156,6 +218,33 @@ public class HandGroup extends GameEventListeningGroup {
         interpolateActorPositions(cards.getChildren(), oldPositions, newPositions, centerOffset,Interpolation.pow2,0.5f);
 
 
+    }
+
+    /**
+     * brings the card up to the front and center, leaving a space where it belongs in the hand. Nothing
+     * other than the card and its controls can be clicked during a zoom. Tapping the card unzooms it.
+     * There also is a cancel, play, and rotate button, and arrows to see the next and previous cards in the hand.
+     * @param toAdd card to zoom in on
+     */
+    private void zoomCard(CardGroup toAdd) {
+        zoomCard = toAdd;
+        //remove toAdd from the hand and add it to the root
+        int cardIndex = cards.getChildren().indexOf(toAdd,true);
+        zoomCard.remove();
+        addActor(zoomCard);
+        makeSpace(cardIndex);
+
+        //blow the card up
+        zoomCard.addAction(Actions.scaleBy(2.0f,2.0f,0.2f,Interpolation.pow2));
+        //move it
+        zoomCard.addAction(Actions.moveTo(600,100,0.2f,Interpolation.pow2));
+
+        //make only the zoom elements touchable
+        for (Actor actor : getChildren()) {
+            actor.setTouchable(Touchable.disabled);
+        }
+        zoomGroup.setTouchable(Touchable.enabled);
+        zoomGroup.setVisible(true);
     }
 
     /**
