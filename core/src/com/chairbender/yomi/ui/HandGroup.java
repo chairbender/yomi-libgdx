@@ -1,5 +1,6 @@
 package com.chairbender.yomi.ui;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -10,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.Align;
+import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
 import com.badlogic.gdx.utils.SnapshotArray;
 import com.chairbender.yomi.api.character.YomiCharacter;
 import com.chairbender.yomi.api.gamevent.GameEventNotifier;
@@ -46,77 +48,84 @@ public class HandGroup extends GameEventListeningGroup {
      * @param index index to add the card at (left is 0)
      */
     public void addCard(final CardGroup toAdd, int index) {
-        //make it big enough
-        toAdd.setOrigin(0,0);
-        toAdd.setScale(3f);
-
         //click events for the card
         toAdd.getListeners().clear();
-        toAdd.addListener(new InputListener() {
-            private float offsetX, offsetY;
-            private boolean dragged = false;
-            private boolean madeSpace = false;
-            private int returnIndex = -1;
+        toAdd.addListener(new DragListener() {
+            public boolean dragged = false;
+            public boolean hasRotated = false;
+            public int returnIndex = -1;
+            public float offsetX;
+            public float offsetY;
 
             @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+            public void dragStart(InputEvent event, float x, float y, int pointer) {
                 Vector2 coords = toAdd.localToParentCoordinates(new Vector2(x,y));
                 offsetX = coords.x - toAdd.getX();
                 offsetY = coords.y - toAdd.getY();
-                return true;
+                if (getTouchDownY() > y) {
+                    if (!hasRotated) {
+                        toAdd.rotate();
+                        hasRotated = true;
+                    }
+
+                }
             }
+
             @Override
-            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+            public void dragStop(InputEvent event, float x, float y, int pointer) {
+                hasRotated = false;
                 if (dragged) {
                     dragged = false;
                     stopMakingSpace();
                     addCard(toAdd,returnIndex);
-                } else {
-                    toAdd.rotate();
                 }
             }
+
+
 
             @Override
-            public void touchDragged(InputEvent event, float x, float y, int pointer) {
+            public void drag(InputEvent event, float x, float y, int pointer) {
+                //Only start dragging the card if we are not dragging down or rotated
+                if ((dragged || getTouchDownY() <= y) && !hasRotated) {
+                    if (dragged == false) {
+                        dragged = true;
+                        returnIndex = cards.getChildren().indexOf(toAdd,true);
+                        removeCard(toAdd);
+                        addActor(toAdd);
+                    }
+                    Vector2 coords = toAdd.localToParentCoordinates(new Vector2(x,y));
+                    toAdd.setPosition(coords.x - offsetX, coords.y - offsetY);
 
-                if (dragged == false) {
-                    dragged = true;
-                    returnIndex = cards.getChildren().indexOf(toAdd,true);
-                    removeCard(toAdd);
-                    addActor(toAdd);
-                }
-                Vector2 coords = toAdd.localToParentCoordinates(new Vector2(x,y));
-                toAdd.setPosition(coords.x - offsetX, coords.y - offsetY);
-
-                //check for making space in the hand
-                boolean stillNeedsSpace = false;
-                for (int i = 0; i < cards.getChildren().size; i++) {
-                    Actor card = cards.getChildren().get(i);
-                    Rectangle cardBounds = new Rectangle(card.getX(), card.getY(), card.getWidth(), card.getHeight());
-                    Rectangle thisBounds = new Rectangle(toAdd.getX(), toAdd.getY(), toAdd.getWidth(), toAdd.getHeight());
-                    if (cardBounds.overlaps(thisBounds)) {
-                        stillNeedsSpace = true;
-                        if (card != invisibleCard) {
-                            //figure out which side. If the center of the dragged card is to the right
-                            //of the center of the collided with card, make space to the right
-                            if ((thisBounds.getX() + thisBounds.getWidth() / 2) >
-                                    (cardBounds.getX() + cardBounds.getWidth() / 2)) {
-                                returnIndex = i + 1;
-                                makeSpace(i + 1);
-                            } else {
-                                returnIndex = i;
-                                makeSpace(i);
+                    //check for making space in the hand
+                    boolean stillNeedsSpace = false;
+                    for (int i = 0; i < cards.getChildren().size; i++) {
+                        Actor card = cards.getChildren().get(i);
+                        Rectangle cardBounds = new Rectangle(card.getX(), card.getY(), card.getWidth(), card.getHeight());
+                        Rectangle thisBounds = new Rectangle(toAdd.getX(), toAdd.getY(), toAdd.getWidth(), toAdd.getHeight());
+                        if (cardBounds.overlaps(thisBounds)) {
+                            stillNeedsSpace = true;
+                            if (card != invisibleCard) {
+                                //figure out which side. If the center of the dragged card is to the right
+                                //of the center of the collided with card, make space to the right
+                                if ((thisBounds.getX() + thisBounds.getWidth() / 2) >
+                                        (cardBounds.getX() + cardBounds.getWidth() / 2)) {
+                                    returnIndex = i + 1;
+                                    makeSpace(i + 1);
+                                } else {
+                                    returnIndex = i;
+                                    makeSpace(i);
+                                }
                             }
+                            break;
                         }
-                        break;
+                    }
+                    if (!stillNeedsSpace) {
+                        stopMakingSpace();
                     }
                 }
-                if (!stillNeedsSpace) {
-                    stopMakingSpace();
-                }
-
             }
         });
+
 
         //save the old positions of the cards
         List<Vector2> oldPositions = getPositions(cards.getChildren());

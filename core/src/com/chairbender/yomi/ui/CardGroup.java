@@ -1,10 +1,11 @@
 package com.chairbender.yomi.ui;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.math.Interpolation;
-import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -29,9 +30,13 @@ public class CardGroup extends Group {
     private MoveInfoGroup bottomMove;
 
     //group so we can have separate rotation and scale groups
+    //The scale group will be the outermost group. The rotateGroup will be inside that
     private Group rotateGroup;
+    private Group scaleGroup;
 
     private static final float LEFT_MARGIN = 14;
+
+    private static final float SCALE = 3.0f;
 
     /**
      *
@@ -56,16 +61,19 @@ public class CardGroup extends Group {
         //groups inside the scaling group
         Group scalingTopGroup = new Group();
         Group scalingBottomGroup = new Group();
-        scalingTopGroup.setBounds(0,0, getScaledImageWidth(), getScaledImageHeight());
-        scalingBottomGroup.setBounds(0,0, getScaledImageWidth(), getScaledImageHeight());
+        //setbounds first without scale for positioning elements
+        this.setBounds(getX(),getY(),cardTexture.getWidth(),cardTexture.getHeight());
+
+        scalingTopGroup.setBounds(0,0, getWidth(), getHeight());
+        scalingBottomGroup.setBounds(0,0, getWidth(), getHeight());
         topMove.setPosition(LEFT_MARGIN,cardImage.getHeight() - topMove.getHeight());
         bottomMove.setPosition(LEFT_MARGIN,cardImage.getHeight() - bottomMove.getHeight());
 
         //set origins to this card's middle point
-        this.setOrigin(getScaledImageWidth()/2,getHeight()/2);
-        topMove.setOrigin(getScaledImageWidth()/2 - topMove.getX(), getScaledImageHeight()/2 - topMove.getY());
+        this.setOrigin(getWidth()/2,getHeight()/2);
+        topMove.setOrigin(getWidth()/2 - topMove.getX(), getHeight()/2 - topMove.getY());
         //need 45 and -50
-        bottomMove.setOrigin(getScaledImageWidth()/2 - bottomMove.getX(), getScaledImageHeight()/2 - bottomMove.getY());
+        bottomMove.setOrigin(getWidth()/2 - bottomMove.getX(), getHeight()/2 - bottomMove.getY());
 
         bottomMove.setRotation(180);
 
@@ -74,41 +82,29 @@ public class CardGroup extends Group {
 
         scalingTopGroup.setOrigin(LEFT_MARGIN,scalingTopGroup.getHeight());
         scalingTopGroup.setScale(0.44f);
-        scalingBottomGroup.setOrigin(getScaledImageWidth() - LEFT_MARGIN,0);
+        scalingBottomGroup.setOrigin(getWidth() - LEFT_MARGIN,0);
         scalingBottomGroup.setScale(0.44f);
         rotateGroup.addActor(scalingTopGroup);
         rotateGroup.addActor(scalingBottomGroup);
 
+        scaleGroup = new Group();
+        scaleGroup.addActor(rotateGroup);
+        scaleGroup.setScale(SCALE);
 
+        rotateGroup.setOrigin(getWidth()/2,getHeight()/2);
 
-        addActor(rotateGroup);
+        //setbounds now with scale
+        this.setBounds(getX(),getY(),cardTexture.getWidth()*SCALE,cardTexture.getHeight()*SCALE);
 
+        addActor(scaleGroup);
+        rotateGroup.setTouchable(Touchable.disabled);
     }
-
-
 
     /**
      * rotate the card so the other side is on top, via an animation
      */
     public void rotate() {
         rotateGroup.addAction(Actions.rotateBy(180,0.5f, Interpolation.pow4));
-    }
-
-    public float getScaledImageHeight() {
-        return cardImage.getHeight()*getScaleX();
-    }
-
-    public float getScaledImageWidth() {
-        return cardImage.getWidth()*getScaleY();
-    }
-
-
-    @Override
-    public void setScale(float scale) {
-        super.setScale(scale);
-        //reset the inner group origin
-        rotateGroup.setOrigin(cardImage.getWidth()/2,cardImage.getHeight()/2);
-        this.setBounds(getX(),getY(),cardImage.getWidth()*scale,cardImage.getHeight()*scale);
     }
 
     /**
