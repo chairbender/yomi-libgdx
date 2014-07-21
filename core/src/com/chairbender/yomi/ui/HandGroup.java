@@ -41,6 +41,7 @@ public class HandGroup extends GameEventListeningGroup {
     private Image previousCardImage;
     private Image rotateImage;
     private Group zoomGroup;
+    private int zoomReturnIndex = 0;
 
 
     private final Texture rotateTexture = new Texture("icons/rotate.png");
@@ -63,16 +64,46 @@ public class HandGroup extends GameEventListeningGroup {
         cancelButton = new Image(cancelTexture);
         cancelButton.setScale(1.5f);
         cancelButton.setPosition(220, 100);
+        cancelButton.addListener(new InputListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                //return the zoomed card
+                unzoom();
+                return true;
+            }
+        });
         nextCardImage = new Image(arrowTexture);
         nextCardImage.setScale(2f);
         nextCardImage.setPosition(1200, 300);
+        nextCardImage.addListener(new InputListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                changeZoomedCard(1);
+                return true;
+            }
+        });
+
         previousCardImage = new Image(arrowTexture);
         previousCardImage.rotateBy(180);
         previousCardImage.setScale(2f);
         previousCardImage.setPosition(500, 400);
+        previousCardImage.addListener(new InputListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                changeZoomedCard(-1);
+                return true;
+            }
+        });
         rotateImage = new Image(rotateTexture);
         rotateImage.setScale(0.5f);
         rotateImage.setPosition(350,500);
+        rotateImage.addListener(new InputListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                zoomCard.rotate();
+                return true;
+            }
+        });
         zoomGroup = new Group();
         zoomGroup.addActor(selectButton);
         zoomGroup.addActor(cancelButton);
@@ -97,27 +128,12 @@ public class HandGroup extends GameEventListeningGroup {
     public void addCard(final CardGroup toAdd, int index) {
         //click events for the card
         toAdd.getListeners().clear();
+
         toAdd.addListener(new DragListener() {
-            public boolean dragged = false;
-            public boolean hasRotated = false;
             public int returnIndex = -1;
             public float offsetX;
             public float offsetY;
             public boolean zoomed = false;
-
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                return true;
-            }
-
-            @Override
-            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
-                if (!dragged && !hasRotated) {
-                    //zoom
-                    zoomed = true;
-                    zoomCard(toAdd);
-                }
-            }
 
             @Override
             public void dragStart(InputEvent event, float x, float y, int pointer) {
@@ -125,9 +141,9 @@ public class HandGroup extends GameEventListeningGroup {
                 offsetX = coords.x - toAdd.getX();
                 offsetY = coords.y - toAdd.getY();
                 if (getTouchDownY() > y) {
-                    if (!hasRotated) {
+                    if (!toAdd.hasRotated) {
                         toAdd.rotate();
-                        hasRotated = true;
+                        toAdd.hasRotated = true;
                     }
 
                 }
@@ -135,9 +151,7 @@ public class HandGroup extends GameEventListeningGroup {
 
             @Override
             public void dragStop(InputEvent event, float x, float y, int pointer) {
-                hasRotated = false;
-                if (dragged) {
-                    dragged = false;
+                if (toAdd.dragged) {
                     stopMakingSpace();
                     addCard(toAdd,returnIndex);
                 }
@@ -148,9 +162,9 @@ public class HandGroup extends GameEventListeningGroup {
             @Override
             public void drag(InputEvent event, float x, float y, int pointer) {
                 //Only start dragging the card if we are not dragging down or rotated
-                if ((dragged || getTouchDownY() <= y) && !hasRotated) {
-                    if (dragged == false) {
-                        dragged = true;
+                if ((toAdd.dragged || getTouchDownY() <= y) && !toAdd.hasRotated) {
+                    if (toAdd.dragged == false) {
+                        toAdd.dragged = true;
                         returnIndex = cards.getChildren().indexOf(toAdd,true);
                         removeCard(toAdd);
                         addActor(toAdd);
@@ -184,6 +198,23 @@ public class HandGroup extends GameEventListeningGroup {
                     if (!stillNeedsSpace) {
                         stopMakingSpace();
                     }
+                }
+            }
+        });
+
+        toAdd.addListener(new InputListener() {
+
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                toAdd.hasRotated = false;
+                toAdd.dragged = false;
+                return true;
+            }
+
+            @Override
+            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+                if (!toAdd.dragged && !toAdd.hasRotated) {
+                    zoomCard(toAdd);
                 }
             }
         });
@@ -229,13 +260,14 @@ public class HandGroup extends GameEventListeningGroup {
     private void zoomCard(CardGroup toAdd) {
         zoomCard = toAdd;
         //remove toAdd from the hand and add it to the root
-        int cardIndex = cards.getChildren().indexOf(toAdd,true);
+        zoomReturnIndex = cards.getChildren().indexOf(toAdd,true);
         zoomCard.remove();
         addActor(zoomCard);
-        makeSpace(cardIndex);
+        makeSpace(zoomReturnIndex);
 
+        zoomCard.getActions().clear();
         //blow the card up
-        zoomCard.addAction(Actions.scaleBy(2.0f,2.0f,0.2f,Interpolation.pow2));
+        zoomCard.addAction(Actions.scaleTo(3.0f,3.0f,0.2f,Interpolation.pow2));
         //move it
         zoomCard.addAction(Actions.moveTo(600,100,0.2f,Interpolation.pow2));
 
@@ -245,6 +277,67 @@ public class HandGroup extends GameEventListeningGroup {
         }
         zoomGroup.setTouchable(Touchable.enabled);
         zoomGroup.setVisible(true);
+        updateZoomControls();
+    }
+
+    /**
+     * unzooms the currently zoomed card
+     */
+    private void unzoom() {
+        stopMakingSpace();
+        zoomCard.setTouchable(Touchable.enabled);
+        zoomCard.addAction(Actions.scaleTo(1.0f,1.0f,0.2f,Interpolation.pow2));
+        addCard(zoomCard, zoomReturnIndex);
+        zoomCard = null;
+        for (Actor actor : getChildren()) {
+            actor.setTouchable(Touchable.enabled);
+        }
+        for (Actor actor : cards.getChildren()) {
+            actor.setTouchable(Touchable.enabled);
+        }
+        zoomGroup.setTouchable(Touchable.disabled);
+        zoomGroup.setVisible(false);
+    }
+
+    /**
+     * zoom to the card before or after the current zoomed card
+     * (direction = 1 for next, -1 for previous)
+     */
+    private void changeZoomedCard(int direction) {
+        stopMakingSpace();
+        zoomCard.addAction(Actions.scaleTo(1.0f, 1.0f, 0.2f, Interpolation.pow2));
+        addCard(zoomCard, zoomReturnIndex);
+        makeSpace(zoomReturnIndex+direction);
+        zoomCard = (CardGroup) cards.getChildren().get(zoomReturnIndex+direction);
+        zoomCard.clearActions();
+        zoomCard.remove();
+        addActor(zoomCard);
+        zoomCard.setScale(3.0f);
+        zoomCard.setPosition(600, 100);
+        zoomReturnIndex+=direction;
+        updateZoomControls();
+    }
+
+    /**
+     * decides whether to hide the arrows based on the currently zoomed card index
+     */
+    private void updateZoomControls() {
+        if (zoomReturnIndex == cards.getChildren().size - 1) {
+            nextCardImage.setTouchable(Touchable.disabled);
+            nextCardImage.setVisible(false);
+            previousCardImage.setTouchable(Touchable.enabled);
+            previousCardImage.setVisible(true);
+        } else if (zoomReturnIndex == 0) {
+            previousCardImage.setTouchable(Touchable.disabled);
+            previousCardImage.setVisible(false);
+            nextCardImage.setTouchable(Touchable.enabled);
+            nextCardImage.setVisible(true);
+        } else {
+            previousCardImage.setTouchable(Touchable.enabled);
+            previousCardImage.setVisible(true);
+            nextCardImage.setTouchable(Touchable.enabled);
+            nextCardImage.setVisible(true);
+        }
     }
 
     /**
@@ -264,7 +357,7 @@ public class HandGroup extends GameEventListeningGroup {
             Vector2 newPosition = newPositions.get(i);
             toMove.setPosition(oldPosition.x, oldPosition.y);
             //this action overrides all others
-            toMove.getActions().clear();
+            //todo: ensure this doesn't break things toMove.getActions().clear();
             toMove.addAction(Actions.moveTo(newPosition.x + xOffset, MARGIN, speed, interp));
         }
     }

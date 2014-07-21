@@ -38,6 +38,10 @@ public class CardGroup extends Group {
 
     private static final float SCALE = 3.0f;
 
+    //For handgroup to track if the card has rotated or dragged during the current event
+    public boolean dragged = false;
+    public boolean hasRotated = false;
+
     /**
      *
      * @param card the card this actor should represent.
