@@ -32,4 +32,8 @@ public class PlayField {
         return new PlayField(PlayerField.getFieldForNewGame(playerCharacter),
                 PlayerField.getFieldForNewGame(opponentCharacter));
     }
+
+    public PlayerField getThisPlayerField() {
+        return playerField;
+    }
 }

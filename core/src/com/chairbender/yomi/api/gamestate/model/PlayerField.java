@@ -28,6 +28,8 @@ public class PlayerField {
         this.playArea = playArea;
     }
 
+
+
     /**
      *
      * @param chosenCharacter character the player will play as
@@ -42,4 +44,7 @@ public class PlayerField {
 
     }
 
+    public YomiCharacter getYomiCharacter() {
+        return character;
+    }
 }

@@ -10,6 +10,7 @@ public class OpponentPlayAreaGroup extends Group {
 
     private DeckGroup deck;
     private DiscardGroup discard;
+    private HealthBarGroup healthBar;
 
 
     public OpponentPlayAreaGroup() {
@@ -20,8 +21,14 @@ public class OpponentPlayAreaGroup extends Group {
 
         deck.setPosition(0,discard.getHeight() + 10);
 
+        //TODO: unhardcode when needed
+        healthBar = new HealthBarGroup(90);
+
+        healthBar.setPosition(0,UIConstants.WORLD_HEIGHT - getY() - 50);
+
         addActor(deck);
         addActor(discard);
+        addActor(healthBar);
     }
 
 }

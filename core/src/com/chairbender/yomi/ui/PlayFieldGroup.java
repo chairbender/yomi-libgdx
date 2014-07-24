@@ -18,7 +18,7 @@ import com.chairbender.yomi.api.gamevent.GameEventNotifier;
  */
 public class PlayFieldGroup extends GameEventListeningGroup {
 
-    private PlayerPlayAreaGroup thisPlayerPlayArea = new PlayerPlayAreaGroup();
+    private PlayerPlayAreaGroup thisPlayerPlayArea;
     private OpponentPlayAreaGroup opponentPlayArea = new OpponentPlayAreaGroup();
     private PhaseIndicatorGroup phaseIndicatorGroup;
     private HandGroup handGroup;
@@ -28,6 +28,8 @@ public class PlayFieldGroup extends GameEventListeningGroup {
 
     public PlayFieldGroup(GameEventNotifier notifier) {
         super(notifier);
+
+        thisPlayerPlayArea = new PlayerPlayAreaGroup();
 
         phaseIndicatorGroup = new PhaseIndicatorGroup(notifier);
         handGroup = new HandGroup(notifier);
