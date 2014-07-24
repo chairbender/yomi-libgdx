@@ -36,7 +36,7 @@ public class CardGroup extends Group {
 
     private static final float LEFT_MARGIN = 14;
 
-    private static final float SCALE = 3.0f;
+    public static final float SCALE = UIConstants.CARD_SCALE;
 
     //For handgroup to track if the card has rotated or dragged during the current event
     public boolean dragged = false;

@@ -8,4 +8,5 @@ public abstract class UIConstants {
     //The width and height of the viewport (NOT the device, thie viewport is stretched to fit the device)
     public static final float WORLD_HEIGHT = 900;
     public static final float WORLD_WIDTH = 1600;
+    public static final float CARD_SCALE = 3.0f;
 }
