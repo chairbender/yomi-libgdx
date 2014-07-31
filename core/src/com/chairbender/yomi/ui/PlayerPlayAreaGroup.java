@@ -21,7 +21,7 @@ public class PlayerPlayAreaGroup extends GameEventListeningGroup {
         super(notifier);
         setPosition(0,UIConstants.WORLD_HEIGHT/2 - 40);
         this.deck = new DeckGroup();
-        this.discard = new DiscardGroup();
+        this.discard = new DiscardGroup(true);
 
         deck.setPosition(0,discard.getHeight() + 10);
 

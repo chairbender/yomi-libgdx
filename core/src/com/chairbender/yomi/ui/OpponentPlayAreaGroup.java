@@ -18,7 +18,7 @@ public class OpponentPlayAreaGroup extends GameEventListeningGroup {
         super(notifier);
 
         this.deck = new DeckGroup();
-        this.discard = new DiscardGroup();
+        this.discard = new DiscardGroup(false);
         setPosition(UIConstants.WORLD_WIDTH - this.deck.getWidth(),UIConstants.WORLD_HEIGHT/2 - 40);
 
         deck.setPosition(0,discard.getHeight() + 10);
