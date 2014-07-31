@@ -47,4 +47,8 @@ public class PlayerField {
     public YomiCharacter getYomiCharacter() {
         return character;
     }
+
+    public float getCurrentHealth() {
+        return currentHealth;
+    }
 }

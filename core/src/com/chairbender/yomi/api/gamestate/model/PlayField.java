@@ -36,4 +36,8 @@ public class PlayField {
     public PlayerField getThisPlayerField() {
         return playerField;
     }
+
+    public PlayerField getOpponentField() {
+        return opponentField;
+    }
 }

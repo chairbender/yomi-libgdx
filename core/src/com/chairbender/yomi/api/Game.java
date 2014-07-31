@@ -7,6 +7,7 @@ import com.chairbender.yomi.api.gamestate.model.PlayField;
 import com.chairbender.yomi.api.gamestate.model.PlayerField;
 import com.chairbender.yomi.api.gamevent.EventHandler;
 import com.chairbender.yomi.api.gamevent.GameEventNotifier;
+import com.chairbender.yomi.api.gamevent.GameStartEvent;
 import com.chairbender.yomi.api.gamevent.PhaseChangeEvent;
 
 /**
@@ -32,9 +33,12 @@ public class Game {
     }
 
     public DrawPhaseState startGame() {
-        eventNotifier.notifyEvent(new PhaseChangeEvent(Phase.DRAW));
         //create the play field
         PlayField startingField = PlayField.getForNewGame(playerCharacter,opponentCharacter);
+
+        eventNotifier.notifyEvent(new GameStartEvent(startingField));
+        eventNotifier.notifyEvent(new PhaseChangeEvent(Phase.DRAW));
+
 
         return new DrawPhaseState(eventNotifier, startingField);
     }

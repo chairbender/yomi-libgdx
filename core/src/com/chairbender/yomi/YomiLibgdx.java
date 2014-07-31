@@ -10,6 +10,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.chairbender.yomi.api.Game;
 import com.chairbender.yomi.api.character.YomiCharacter;
+import com.chairbender.yomi.api.gamevent.HealthChangedEvent;
 import com.chairbender.yomi.ui.PlayFieldGroup;
 import com.chairbender.yomi.ui.UIConstants;
 

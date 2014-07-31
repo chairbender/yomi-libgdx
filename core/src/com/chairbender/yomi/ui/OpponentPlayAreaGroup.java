@@ -1,19 +1,21 @@
 package com.chairbender.yomi.ui;
 
 import com.badlogic.gdx.scenes.scene2d.Group;
+import com.chairbender.yomi.api.gamevent.GameEventNotifier;
 
 /**
  * The public facing UI info for a player. Includes their name, character, hand count, health, deck,
  * discard, and play area.
  */
-public class OpponentPlayAreaGroup extends Group {
+public class OpponentPlayAreaGroup extends GameEventListeningGroup {
 
     private DeckGroup deck;
     private DiscardGroup discard;
     private HealthBarGroup healthBar;
 
 
-    public OpponentPlayAreaGroup() {
+    public OpponentPlayAreaGroup(GameEventNotifier notifier) {
+        super(notifier);
 
         this.deck = new DeckGroup();
         this.discard = new DiscardGroup();
@@ -21,10 +23,9 @@ public class OpponentPlayAreaGroup extends Group {
 
         deck.setPosition(0,discard.getHeight() + 10);
 
-        //TODO: unhardcode when needed
-        healthBar = new HealthBarGroup(90);
+        healthBar = new HealthBarGroup(notifier,false);
 
-        healthBar.setPosition(0,UIConstants.WORLD_HEIGHT - getY() - 50);
+        healthBar.setPosition(-250,UIConstants.WORLD_HEIGHT - getY() - 50);
 
         addActor(deck);
         addActor(discard);
