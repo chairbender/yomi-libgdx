@@ -6,11 +6,10 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.Group;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.*;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -37,10 +36,30 @@ public class DiscardGroup extends Group {
     private static final float EXPANDED_WIDTH = UIConstants.WORLD_WIDTH - 240;
     private final boolean isLeft;
 
+    //for the zoom menu
+    private CardGroup zoomCard;
+    private int zoomReturnIndex = 0;
+    private Group invisibleCard;
+    private Group zoomGroup;
+    private Image selectButton;
+    private Image cancelButton;
+    private Image nextCardImage;
+    private Image previousCardImage;
+    private Image rotateImage;
+
+
+
+    private final Texture rotateTexture = new Texture("icons/rotate.png");
+    private final Texture arrowTexture = new Texture("icons/arrow.png");
+    private final Texture selectTexture = new Texture("icons/select.png");
+    private final Texture cancelTexture = new Texture("icons/cancel.png");
+
     private Group cards;
 
     //tracks other discard groups so multiple groups aren't expanded
     private static Set<DiscardGroup> discardGroups;
+
+    private Discard lastDiscard;
 
     /**
      *
@@ -118,6 +137,7 @@ public class DiscardGroup extends Group {
      * @param discardPile discard pile to use to update the list of cards
      */
     private void update(Discard discardPile) {
+        lastDiscard = discardPile;
         cards.clear();
         if (discardPile.getCards().size() > 0) {
             List<Card> discards = discardPile.getCards();
@@ -133,8 +153,15 @@ public class DiscardGroup extends Group {
             spacingGroup = spacingGroup.space(space);
             spacingGroup.align(Align.bottom);
             for (Card card : discards) {
-                CardGroup newGroup = new CardGroup(card);
+                final CardGroup newGroup = new CardGroup(card);
                 //when clicked, zoom in just like with the hand group
+                newGroup.addListener(new InputListener() {
+                    @Override
+                    public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                        zoomCard(newGroup);
+                        return true;
+                    }
+                });
                 spacingGroup.addActor(newGroup);
             }
             spacingGroup.layout();
@@ -160,6 +187,132 @@ public class DiscardGroup extends Group {
             }
         }
     }
+
+    /**
+     * brings the card up to the front and center, leaving a space where it belongs in the discard view. Nothing
+     * other than the card and its controls can be clicked during a zoom. Tapping the card unzooms it.
+     * There also is a cancel button and arrows to see the next and previous cards in the hand.
+     * @param toAdd card to zoom in on
+     */
+    private void zoomCard(CardGroup toAdd) {
+        zoomCard = toAdd;
+        //remove toAdd from the hand and add it to the root
+        zoomReturnIndex = cards.getChildren().indexOf(toAdd,true);
+        zoomCard.remove();
+        addActor(zoomCard);
+        makeSpace(zoomReturnIndex);
+
+        zoomCard.getActions().clear();
+        //blow the card up
+        zoomCard.addAction(Actions.scaleTo(3.0f, 3.0f, 0.2f, Interpolation.pow2));
+        //move it
+        zoomCard.addAction(Actions.moveTo(600,100,0.2f,Interpolation.pow2));
+
+        //make only the zoom elements touchable
+        for (Actor actor : getChildren()) {
+            actor.setTouchable(Touchable.disabled);
+        }
+        zoomGroup.setTouchable(Touchable.enabled);
+        zoomGroup.setVisible(true);
+        updateZoomControls();
+    }
+
+    /**
+     * unzooms the currently zoomed card
+     */
+    private void unzoom() {
+        stopMakingSpace();
+        zoomCard.setTouchable(Touchable.enabled);
+        zoomCard.addAction(Actions.scaleTo(1.0f,1.0f,0.2f,Interpolation.pow2));
+        //TODO: interpolate the card
+        update(lastDiscard);
+        zoomCard = null;
+        for (Actor actor : getChildren()) {
+            actor.setTouchable(Touchable.enabled);
+        }
+        for (Actor actor : cards.getChildren()) {
+            actor.setTouchable(Touchable.enabled);
+        }
+        zoomGroup.setTouchable(Touchable.disabled);
+        zoomGroup.setVisible(false);
+    }
+
+    /**
+     * decides whether to hide the arrows based on the currently zoomed card index
+     */
+    private void updateZoomControls() {
+        if (zoomReturnIndex == cards.getChildren().size - 1) {
+            nextCardImage.setTouchable(Touchable.disabled);
+            nextCardImage.setVisible(false);
+            previousCardImage.setTouchable(Touchable.enabled);
+            previousCardImage.setVisible(true);
+        } else if (zoomReturnIndex == 0) {
+            previousCardImage.setTouchable(Touchable.disabled);
+            previousCardImage.setVisible(false);
+            nextCardImage.setTouchable(Touchable.enabled);
+            nextCardImage.setVisible(true);
+        } else {
+            previousCardImage.setTouchable(Touchable.enabled);
+            previousCardImage.setVisible(true);
+            nextCardImage.setTouchable(Touchable.enabled);
+            nextCardImage.setVisible(true);
+        }
+    }
+
+    /**
+     * makes space for a card (adds an invisible card)
+     * @param index index to make space for a card at
+     */
+    private void makeSpace(int index) {
+        if (cards.getChildren().size > 0) {
+            stopMakingSpace();
+            invisibleCard = new Group();
+            invisibleCard.setBounds(0,0,cards.getChildren().get(0).getWidth(),cards.getChildren().get(0).getHeight());
+
+            //save the old positions of the cards
+            List<Vector2> oldPositions = getPositions(cards.getChildren());
+            oldPositions.add(index,new Vector2(invisibleCard.getX(),invisibleCard.getY()));
+
+            //Determine what the new positions would be
+            //by adding them to a horizontal group and checking their positions
+            HorizontalGroup newGroup = new HorizontalGroup().space(calculateSpacing(cards.getChildren().size + 1,invisibleCard.getWidth()));
+            newGroup.align(Align.bottom);
+
+            cards.addActorAt(index,invisibleCard);
+
+            while (cards.getChildren().size > 0) {
+                newGroup.addActor(cards.getChildren().get(0));
+            }
+            newGroup.layout();
+
+
+
+            List<Vector2> newPositions = getPositions(newGroup.getChildren());
+            //calculate what is needed to center the cards
+            float centerOffset = UIConstants.WORLD_WIDTH / 2 - newGroup.getPrefWidth() / 2;
+            //remove them from the horizontal group and add them back to the normal group so it doesn't try to move them around
+            while (newGroup.getChildren().size > 0) {
+                cards.addActor(newGroup.getChildren().get(0));
+            }
+
+            //interpolate all but the invisible card
+            cards.getChildren().get(index).setPosition(newPositions.get(index).x,newPositions.get(index).y);
+            cards.removeActor(invisibleCard);
+            oldPositions.remove(index);
+            newPositions.remove(index);
+
+            interpolateActorPositions(cards.getChildren(), oldPositions, newPositions, centerOffset, Interpolation.linear,0.2f);
+            cards.addActor(invisibleCard);
+        }
+    }
+
+    private void stopMakingSpace() {
+        if (invisibleCard != null && cards.getChildren().contains(invisibleCard,true)) {
+            removeCard(invisibleCard);
+        }
+        invisibleCard = null;
+    }
+
 
 
     private void expand() {
