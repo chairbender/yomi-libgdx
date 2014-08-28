@@ -54,7 +54,7 @@ public class YomiCharacter {
         List<String[]> entries = null;
         try {
             FileHandle handle = Gdx.files.internal("definitions/cards.csv");
-            reader = new CSVReader(new FileReader(handle.file()));
+            reader = new CSVReader(new BufferedReader(new InputStreamReader((handle.read()))));
             entries = reader.readAll();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
