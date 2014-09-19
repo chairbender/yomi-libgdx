@@ -1,6 +1,5 @@
 package com.chairbender.yomi.api.character;
 
-import au.com.bytecode.opencsv.CSVReader;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.chairbender.yomi.api.ability.CharacterAbility;
@@ -8,9 +7,10 @@ import com.chairbender.yomi.api.card.Card;
 import com.chairbender.yomi.api.card.move.PokerRank;
 import com.chairbender.yomi.api.card.move.PokerValue;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,7 +54,7 @@ public class YomiCharacter {
         List<String[]> entries = null;
         try {
             FileHandle handle = Gdx.files.internal("definitions/cards.csv");
-            reader = new CSVReader(new FileReader(handle.file()));
+            reader = new CSVReader(new BufferedReader(new InputStreamReader((handle.read()))));
             entries = reader.readAll();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
